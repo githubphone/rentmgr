@@ -1,0 +1,24 @@
+{
+  "name": "RentMgr Development",
+  "image": "mcr.microsoft.com/devcontainers/java:17",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "18"
+    },
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.vscode-json",
+        "ms-vscode.vscode-typescript-next",
+        "ms-vscode.vscode-java-pack",
+        "ms-vscode.vscode-maven",
+        "bradlc.vscode-tailwindcss",
+        "ms-vscode.vscode-docker"
+      ]
+    }
+  },
+  "postCreateCommand": "echo 'Development environment ready!'",
+  "remoteUser": "vscode"
+}

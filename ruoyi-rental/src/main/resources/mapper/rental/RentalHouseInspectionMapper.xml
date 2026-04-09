@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.rental.mapper.RentalHouseInspectionMapper">
+
+    <resultMap type="RentalHouseInspection" id="RentalHouseInspectionResult">
+        <id     property="id"               column="id"                  />
+        <result property="houseId"          column="house_id"           />
+        <result property="inspectorId"     column="inspector_id"       />
+        <result property="inspectionTime"   column="inspection_time"    />
+        <result property="fireLevel"        column="fire_level"         />
+        <result property="dataLevel"        column="data_level"         />
+        <result property="securityLevel"   column="security_level"     />
+        <result property="overallLevel"    column="overall_level"       />
+        <result property="remark"           column="remark"             />
+        <result property="createBy"         column="create_by"          />
+        <result property="createTime"       column="create_time"        />
+        <result property="updateBy"         column="update_by"          />
+        <result property="updateTime"       column="update_time"        />
+        <association property="house" javaType="RentalHouse">
+            <id     property="id"       column="house_id"         />
+            <result property="address"  column="house_address"    />
+        </association>
+    </resultMap>
+
+    <sql id="selectInspectionVo">
+        select i.id, i.house_id, i.inspector_id, i.inspection_time, i.fire_level, i.data_level,
+               i.security_level, i.overall_level, i.remark, i.create_by, i.create_time,
+               i.update_by, i.update_time, h.address as house_address
+        from rental_house_inspections i
+        left join rental_houses h on i.house_id = h.id
+    </sql>
+
+    <select id="selectInspectionList" parameterType="RentalHouseInspection" resultMap="RentalHouseInspectionResult">
+        <include refid="selectInspectionVo"/>
+        <where>
+            <if test="houseId != null">
+                AND i.house_id = #{houseId}
+            </if>
+            <if test="inspectorId != null">
+                AND i.inspector_id = #{inspectorId}
+            </if>
+            <if test="fireLevel != null and fireLevel != ''">
+                AND i.fire_level = #{fireLevel}
+            </if>
+            <if test="dataLevel != null and dataLevel != ''">
+                AND i.data_level = #{dataLevel}
+            </if>
+            <if test="securityLevel != null and securityLevel != ''">
+                AND i.security_level = #{securityLevel}
+            </if>
+            <if test="overallLevel != null and overallLevel != ''">
+                AND i.overall_level = #{overallLevel}
+            </if>
+        </where>
+        order by i.inspection_time desc
+    </select>
+
+    <select id="selectInspectionById" parameterType="Long" resultMap="RentalHouseInspectionResult">
+        <include refid="selectInspectionVo"/>
+        where i.id = #{id}
+    </select>
+
+    <select id="selectLatestInspectionByHouseId" parameterType="Long" resultMap="RentalHouseInspectionResult">
+        <include refid="selectInspectionVo"/>
+        where i.house_id = #{houseId}
+        order by i.inspection_time desc
+        limit 1
+    </select>
+
+    <insert id="insertInspection" parameterType="RentalHouseInspection" useGeneratedKeys="true" keyProperty="id">
+        insert into rental_house_inspections
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="houseId != null">house_id,</if>
+            <if test="inspectorId != null">inspector_id,</if>
+            <if test="inspectionTime != null">inspection_time,</if>
+            <if test="fireLevel != null and fireLevel != ''">fire_level,</if>
+            <if test="dataLevel != null and dataLevel != ''">data_level,</if>
+            <if test="securityLevel != null and securityLevel != ''">security_level,</if>
+            <if test="overallLevel != null and overallLevel != ''">overall_level,</if>
+            <if test="remark != null and remark != ''">remark,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            create_time,
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="houseId != null">#{houseId},</if>
+            <if test="inspectorId != null">#{inspectorId},</if>
+            <if test="inspectionTime != null">#{inspectionTime},</if>
+            <if test="fireLevel != null and fireLevel != ''">#{fireLevel},</if>
+            <if test="dataLevel != null and dataLevel != ''">#{dataLevel},</if>
+            <if test="securityLevel != null and securityLevel != ''">#{securityLevel},</if>
+            <if test="overallLevel != null and overallLevel != ''">#{overallLevel},</if>
+            <if test="remark != null and remark != ''">#{remark},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            now(),
+        </trim>
+    </insert>
+
+    <update id="updateInspection" parameterType="RentalHouseInspection">
+        update rental_house_inspections
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="houseId != null">house_id = #{houseId},</if>
+            <if test="inspectorId != null">inspector_id = #{inspectorId},</if>
+            <if test="inspectionTime != null">inspection_time = #{inspectionTime},</if>
+            <if test="fireLevel != null and fireLevel != ''">fire_level = #{fireLevel},</if>
+            <if test="dataLevel != null and dataLevel != ''">data_level = #{dataLevel},</if>
+            <if test="securityLevel != null and securityLevel != ''">security_level = #{securityLevel},</if>
+            <if test="overallLevel != null and overallLevel != ''">overall_level = #{overallLevel},</if>
+            <if test="remark != null and remark != ''">remark = #{remark},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = now(),
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteInspectionById" parameterType="Long">
+        delete from rental_house_inspections where id = #{id}
+    </delete>
+
+    <delete id="deleteInspectionByHouseId" parameterType="Long">
+        delete from rental_house_inspections where house_id = #{houseId}
+    </delete>
+
+</mapper>

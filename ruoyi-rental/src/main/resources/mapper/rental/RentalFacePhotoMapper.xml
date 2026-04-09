@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.rental.mapper.RentalFacePhotoMapper">
+
+    <resultMap type="RentalFacePhoto" id="RentalFacePhotoResult">
+        <id     property="id"          column="id"            />
+        <result property="residentId"  column="resident_id"   />
+        <result property="photoUrl"    column="photo_url"     />
+        <result property="featureId"   column="feature_id"    />
+        <result property="isVerified"  column="is_verified"   />
+        <result property="createBy"    column="create_by"     />
+        <result property="createTime"  column="create_time"   />
+    </resultMap>
+
+    <sql id="selectFacePhotoVo">
+        select id, resident_id, photo_url, feature_id, is_verified, create_by, create_time
+        from rental_face_photos
+    </sql>
+
+    <select id="selectFacePhotoList" parameterType="RentalFacePhoto" resultMap="RentalFacePhotoResult">
+        <include refid="selectFacePhotoVo"/>
+        <where>
+            <if test="residentId != null">and resident_id = #{residentId}</if>
+            <if test="featureId != null and featureId != ''">and feature_id = #{featureId}</if>
+            <if test="isVerified != null and isVerified != ''">and is_verified = #{isVerified}</if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <select id="selectFacePhotoById" parameterType="Long" resultMap="RentalFacePhotoResult">
+        <include refid="selectFacePhotoVo"/>
+        where id = #{id}
+    </select>
+
+    <insert id="insertFacePhoto" parameterType="RentalFacePhoto" useGeneratedKeys="true" keyProperty="id">
+        insert into rental_face_photos
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="residentId != null">resident_id,</if>
+            <if test="photoUrl != null and photoUrl != ''">photo_url,</if>
+            <if test="featureId != null and featureId != ''">feature_id,</if>
+            <if test="isVerified != null and isVerified != ''">is_verified,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            create_time,
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="residentId != null">#{residentId},</if>
+            <if test="photoUrl != null and photoUrl != ''">#{photoUrl},</if>
+            <if test="featureId != null and featureId != ''">#{featureId},</if>
+            <if test="isVerified != null and isVerified != ''">#{isVerified},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            now(),
+        </trim>
+    </insert>
+
+    <update id="updateFacePhoto" parameterType="RentalFacePhoto">
+        update rental_face_photos
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="residentId != null">resident_id = #{residentId},</if>
+            <if test="photoUrl != null and photoUrl != ''">photo_url = #{photoUrl},</if>
+            <if test="featureId != null and featureId != ''">feature_id = #{featureId},</if>
+            <if test="isVerified != null and isVerified != ''">is_verified = #{isVerified},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteFacePhotoById" parameterType="Long">
+        delete from rental_face_photos where id = #{id}
+    </delete>
+
+    <delete id="deleteFacePhotoByIds" parameterType="Long">
+        delete from rental_face_photos where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

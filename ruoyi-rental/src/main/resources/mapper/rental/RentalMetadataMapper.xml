@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.rental.mapper.RentalMetadataMapper">
+
+    <resultMap type="RentalMetadata" id="RentalMetadataResult">
+        <id     property="id"            column="id"             />
+        <result property="deviceId"      column="device_id"     />
+        <result property="metadataType"  column="metadata_type"  />
+        <result property="captureUrl"   column="capture_url"    />
+        <result property="detectUrl"     column="detect_url"     />
+        <result property="description"   column="description"    />
+        <result property="attributes"    column="attributes"     />
+        <result property="createTime"    column="create_time"    />
+    </resultMap>
+
+    <sql id="selectMetadataVo">
+        select id, device_id, metadata_type, capture_url, detect_url,
+               description, attributes, create_time
+        from rental_metadata
+    </sql>
+
+    <select id="selectMetadataList" parameterType="RentalMetadata" resultMap="RentalMetadataResult">
+        <include refid="selectMetadataVo"/>
+        <where>
+            <if test="deviceId != null and deviceId != ''">and device_id = #{deviceId}</if>
+            <if test="metadataType != null and metadataType != ''">and metadata_type = #{metadataType}</if>
+            <if test="params.beginTime != null and params.beginTime != ''">
+                AND create_time &gt;= #{params.beginTime}
+            </if>
+            <if test="params.endTime != null and params.endTime != ''">
+                AND create_time &lt;= #{params.endTime}
+            </if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <select id="selectMetadataById" parameterType="Long" resultMap="RentalMetadataResult">
+        <include refid="selectMetadataVo"/>
+        where id = #{id}
+    </select>
+
+    <insert id="insertMetadata" parameterType="RentalMetadata" useGeneratedKeys="true" keyProperty="id">
+        insert into rental_metadata
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="deviceId != null and deviceId != ''">device_id,</if>
+            <if test="metadataType != null and metadataType != ''">metadata_type,</if>
+            <if test="captureUrl != null and captureUrl != ''">capture_url,</if>
+            <if test="detectUrl != null and detectUrl != ''">detect_url,</if>
+            <if test="description != null and description != ''">description,</if>
+            <if test="attributes != null and attributes != ''">attributes,</if>
+            create_time,
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="deviceId != null and deviceId != ''">#{deviceId},</if>
+            <if test="metadataType != null and metadataType != ''">#{metadataType},</if>
+            <if test="captureUrl != null and captureUrl != ''">#{captureUrl},</if>
+            <if test="detectUrl != null and detectUrl != ''">#{detectUrl},</if>
+            <if test="description != null and description != ''">#{description},</if>
+            <if test="attributes != null and attributes != ''">CAST(#{attributes} AS jsonb),</if>
+            now(),
+        </trim>
+    </insert>
+
+    <update id="updateMetadata" parameterType="RentalMetadata">
+        update rental_metadata
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="deviceId != null and deviceId != ''">device_id = #{deviceId},</if>
+            <if test="metadataType != null and metadataType != ''">metadata_type = #{metadataType},</if>
+            <if test="captureUrl != null and captureUrl != ''">capture_url = #{captureUrl},</if>
+            <if test="detectUrl != null and detectUrl != ''">detect_url = #{detectUrl},</if>
+            <if test="description != null and description != ''">description = #{description},</if>
+            <if test="attributes != null and attributes != ''">attributes = #{attributes},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteMetadataById" parameterType="Long">
+        delete from rental_metadata where id = #{id}
+    </delete>
+
+    <delete id="deleteMetadataByIds" parameterType="Long">
+        delete from rental_metadata where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+</mapper>

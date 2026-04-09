@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>地图选点</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body, #app { width: 100%; height: 100%; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; }
+
+    .map-page {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      background: #f5f5f5;
+    }
+
+    .map-header {
+      background: linear-gradient(135deg, #0F766E 0%, #14B8A6 100%);
+      color: white;
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .back-btn {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: rgba(255,255,255,0.2);
+      border-radius: 50%;
+      color: white;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .header-title {
+      font-size: 17px;
+      font-weight: 500;
+    }
+
+    .search-box {
+      padding: 12px 16px;
+      background: white;
+      border-bottom: 1px solid #eee;
+    }
+
+    .search-input {
+      width: 100%;
+      height: 40px;
+      padding: 0 16px;
+      border: 1px solid #ddd;
+      border-radius: 20px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .search-input:focus {
+      border-color: #0F766E;
+    }
+
+    .map-container {
+      flex: 1;
+      position: relative;
+    }
+
+    #amap {
+      width: 100%;
+      height: 100%;
+    }
+
+    .marker-tip {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -100%);
+      pointer-events: none;
+    }
+
+    .marker-icon {
+      font-size: 36px;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+    }
+
+    .coordinate-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+    }
+
+    .coord-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .coord-text {
+      font-size: 13px;
+      color: #666;
+    }
+
+    .coord-value {
+      font-size: 15px;
+      color: #134E4A;
+      font-weight: 500;
+    }
+
+    .confirm-btn {
+      padding: 10px 24px;
+      background: linear-gradient(135deg, #0F766E 0%, #14B8A6 100%);
+      color: white;
+      border: none;
+      border-radius: 22px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .confirm-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+
+    .loading-icon {
+      font-size: 32px;
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .no-key {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      color: #999;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="map-page">
+      <div class="map-header">
+        <button class="back-btn" id="backBtn">‹</button>
+        <span class="header-title">地图选点</span>
+      </div>
+
+      <div class="search-box">
+        <input type="text" class="search-input" id="searchInput" placeholder="输入地址搜索定位">
+      </div>
+
+      <div class="map-container">
+        <div id="amap"></div>
+        <div class="marker-tip" id="markerTip" style="display:none;">
+          <span class="marker-icon">📍</span>
+        </div>
+        <div class="loading" id="loading">
+          <div class="loading-icon">🗺️</div>
+          <div style="margin-top:8px;color:#666;font-size:14px;">地图加载中...</div>
+        </div>
+        <div class="no-key" id="noKey" style="display:none;">
+          <div style="font-size:48px;margin-bottom:12px;">🗺️</div>
+          <div>高德地图 Key 未配置</div>
+        </div>
+      </div>
+
+      <div class="coordinate-bar">
+        <div class="coord-info">
+          <span class="coord-text">经度</span>
+          <span class="coord-value" id="lngValue">-</span>
+        </div>
+        <div class="coord-info">
+          <span class="coord-text">纬度</span>
+          <span class="coord-value" id="latValue">-</span>
+        </div>
+        <button class="confirm-btn" id="confirmBtn" disabled>确认位置</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key=e05c016ac681982f570079e39e981e32&plugin=AMap.Geocoder"></script>
+  <script>
+    const AMAP_KEY = 'e05c016ac681982f570079e39e981e32'
+
+    let map = null
+    let marker = null
+    let geocoder = null
+    let currentLngLat = null
+
+    const loadingEl = document.getElementById('loading')
+    const noKeyEl = document.getElementById('noKey')
+    const markerTipEl = document.getElementById('markerTip')
+    const lngValueEl = document.getElementById('lngValue')
+    const latValueEl = document.getElementById('latValue')
+    const confirmBtnEl = document.getElementById('confirmBtn')
+    const searchInputEl = document.getElementById('searchInput')
+    const backBtnEl = document.getElementById('backBtn')
+
+    function getUrlParam(name) {
+      const url = window.location.href
+      const search = url.split('?')[1]
+      if (!search) return null
+      const params = search.split('&')
+      for (let i = 0; i < params.length; i++) {
+        const pair = params[i].split('=')
+        if (pair[0] === name) {
+          return decodeURIComponent(pair[1])
+        }
+      }
+      return null
+    }
+
+    function initMap() {
+      const lat = getUrlParam('lat')
+      const lng = getUrlParam('lng')
+
+      const center = lat && lng ? [parseFloat(lng), parseFloat(lat)] : [113.0, 23.0]
+
+      map = new AMap.Map('amap', {
+        zoom: 16,
+        center: center,
+        viewMode: '2D'
+      })
+
+      map.on('complete', function() {
+        loadingEl.style.display = 'none'
+      })
+
+      map.on('click', function(e) {
+        setMarkerPosition(e.lnglat)
+      })
+
+      geocoder = new AMap.Geocoder()
+
+      if (lat && lng) {
+        setMarkerPosition(new AMap.LngLat(parseFloat(lng), parseFloat(lat)))
+      }
+    }
+
+    function setMarkerPosition(lnglat) {
+      currentLngLat = lnglat
+      lngValueEl.textContent = lnglat.lng.toFixed(6)
+      latValueEl.textContent = lnglat.lat.toFixed(6)
+      confirmBtnEl.disabled = false
+
+      markerTipEl.style.display = 'block'
+      markerTipEl.style.top = '50%'
+      markerTipEl.style.left = '50%'
+      markerTipEl.style.transform = 'translate(-50%, -100%)'
+
+      if (marker) {
+        marker.setPosition(lnglat)
+      } else {
+        marker = new AMap.Marker({
+          position: lnglat,
+          icon: new AMap.Icon({
+            size: new AMap.Size(32, 32),
+            image: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHBhdGggZD0iTTE2IDJjLTcuNzIgMC0xNCA2LjI4LTE0IDE0IDAgNS45MSA0LjA2IDExLjA2IDkuNzkgMTMuNzNMMTYgMzJhMSAxMSA0IDAgMSAxLjA0IDBsMy4yMi0xLjI1QzhLjI0IDI3LjA5IDE2IDIwIDE2IDIwem0wIDI5LjM1bC0yLjM5LTIuMzRDMTAuNTMgMjQuMjggNiAxOC4A2IDYgNiA0LjI4IDEzLjI4IDIgMTZzNi4yOC00IDE0LTQgMTQgNC4yOCAxNCAxNCA0LjI4em0wLTI1LjM1Ij48L3BhdGg+PC9zdmc+',
+            imageSize: new AMap.Size(32, 32)
+          }),
+          offset: new AMap.Pixel(-16, -32)
+        })
+        marker.setMap(map)
+      }
+    }
+
+    searchInputEl.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        searchAddress()
+      }
+    })
+
+    searchInputEl.addEventListener('input', function() {
+      if (!this.value) {
+        lngValueEl.textContent = currentLngLat ? currentLngLat.lng.toFixed(6) : '-'
+        latValueEl.textContent = currentLngLat ? currentLngLat.lat.toFixed(6) : '-'
+      }
+    })
+
+    function searchAddress() {
+      const address = searchInputEl.value.trim()
+      if (!address) return
+
+      geocoder.getLocation(address, function(status, result) {
+        if (status === 'complete' && result.geocodes.length) {
+          const lnglat = result.geocodes[0].location
+          map.setCenter(lnglat)
+          setMarkerPosition(lnglat)
+        } else {
+          alert('未找到该地址')
+        }
+      })
+    }
+
+    confirmBtnEl.addEventListener('click', function() {
+      if (currentLngLat) {
+        const data = {
+          lng: currentLngLat.lng,
+          lat: currentLngLat.lat
+        }
+
+        if (window.parent !== window) {
+          window.parent.postMessage(JSON.stringify(data), '*')
+        }
+
+        const returnUrl = getUrlParam('returnUrl')
+        if (returnUrl) {
+          window.location.href = returnUrl + '?lng=' + data.lng + '&lat=' + data.lat
+        } else {
+          alert('已确认位置：' + data.lng.toFixed(6) + ', ' + data.lat.toFixed(6))
+        }
+      }
+    })
+
+    backBtnEl.addEventListener('click', function() {
+      if (window.parent !== window) {
+        window.parent.postMessage(JSON.stringify({ action: 'cancel' }), '*')
+      }
+      window.history.back()
+    })
+
+    window.addEventListener('message', function(e) {
+      console.log('Received message:', e.data)
+    })
+
+    if (!AMAP_KEY) {
+      loadingEl.style.display = 'none'
+      noKeyEl.style.display = 'block'
+    } else {
+      initMap()
+    }
+  </script>
+</body>
+</html>

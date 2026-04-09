@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.rental.mapper.RentalHouseMapper">
+
+    <resultMap type="RentalHouse" id="RentalHouseResult">
+        <id     property="id"                column="id"                   />
+        <result property="address"            column="address"               />
+        <result property="latitude"           column="latitude"              />
+        <result property="longitude"          column="longitude"             />
+        <result property="townStreet"         column="town_street"           />
+        <result property="totalFloors"        column="total_floors"         />
+        <result property="totalRooms"         column="total_rooms"          />
+        <result property="managerId"          column="manager_id"           />
+        <result property="managerType"        column="manager_type"         />
+        <result property="houseType"          column="house_type"           />
+        <result property="residenceType"      column="residence_type"       />
+        <result property="propertyType"       column="property_type"       />
+        <result property="isOnlineRental"     column="is_online_rental"     />
+        <result property="hasAccessControl"   column="has_access_control"   />
+        <result property="environmentType"    column="environment_type"     />
+        <result property="roomArea"           column="room_area"            />
+        <result property="rent"               column="rent"                  />
+        <result property="roomsPerFloor"      column="rooms_per_floor"      />
+        <result property="frontPhoto"         column="front_photo"          />
+        <result property="sidePhoto"          column="side_photo"           />
+        <result property="surroundingPhoto"   column="surrounding_photo"    />
+        <result property="policeStationId"    column="police_station_id"    />
+        <result property="gridId"             column="grid_id"              />
+        <result property="overallLevel"       column="overall_level"        />
+        <result property="status"             column="status"               />
+        <result property="createBy"           column="create_by"            />
+        <result property="createTime"         column="create_time"          />
+        <result property="updateBy"           column="update_by"            />
+        <result property="updateTime"         column="update_time"          />
+        <association property="manager" javaType="RentalManager">
+            <id     property="id"           column="manager_id"          />
+            <result property="managerName"   column="manager_name"        />
+            <result property="phone"         column="manager_phone"      />
+            <result property="idCard"        column="manager_id_card"    />
+            <result property="idCardAddress" column="manager_id_card_address" />
+            <result property="identity"      column="manager_identity"  />
+            <result property="wechat"       column="manager_wechat"    />
+        </association>
+        <association property="grid" javaType="RentalGrid">
+            <id     property="id"           column="grid_id"             />
+            <result property="gridName"      column="grid_name"           />
+        </association>
+    </resultMap>
+
+    <sql id="selectHouseVo">
+        select h.id, h.address, h.latitude, h.longitude, h.town_street, h.total_floors, h.total_rooms,
+               h.manager_id, h.manager_type, h.house_type, h.residence_type, h.property_type,
+               h.is_online_rental, h.has_access_control, h.environment_type, h.room_area, h.rent,
+               h.rooms_per_floor, h.front_photo, h.side_photo, h.surrounding_photo,
+               h.police_station_id, h.grid_id, h.overall_level, h.status,
+               h.create_by, h.create_time, h.update_by, h.update_time,
+               m.manager_name, m.phone as manager_phone, m.id_card as manager_id_card,
+               m.id_card_address as manager_id_card_address, m.identity as manager_identity,
+               m.wechat as manager_wechat,
+               g.grid_name
+        from rental_houses h
+        left join rental_managers m on h.manager_id = m.id
+        left join rental_grids g on h.grid_id = g.id
+    </sql>
+
+    <select id="selectHouseList" parameterType="RentalHouse" resultMap="RentalHouseResult">
+        <include refid="selectHouseVo"/>
+        <where>
+            <if test="address != null and address != ''">
+                AND h.address like concat('%', #{address}, '%')
+            </if>
+            <if test="townStreet != null and townStreet != ''">
+                AND h.town_street = #{townStreet}
+            </if>
+            <if test="managerId != null">
+                AND h.manager_id = #{managerId}
+            </if>
+            <if test="gridId != null">
+                AND h.grid_id = #{gridId}
+            </if>
+            <if test="policeStationId != null">
+                AND h.police_station_id = #{policeStationId}
+            </if>
+            <if test="overallLevel != null and overallLevel != ''">
+                AND h.overall_level = #{overallLevel}
+            </if>
+            <if test="status != null and status != ''">
+                AND h.status = #{status}
+            </if>
+            <if test="houseType != null and houseType != ''">
+                AND h.house_type = #{houseType}
+            </if>
+            <if test="environmentType != null and environmentType != ''">
+                AND h.environment_type = #{environmentType}
+            </if>
+        </where>
+        order by h.create_time desc
+    </select>
+
+    <select id="selectHouseById" parameterType="Long" resultMap="RentalHouseResult">
+        <include refid="selectHouseVo"/>
+        where h.id = #{id}
+    </select>
+
+    <insert id="insertHouse" parameterType="RentalHouse" useGeneratedKeys="true" keyProperty="id">
+        insert into rental_houses
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="address != null and address != ''">address,</if>
+            <if test="latitude != null">latitude,</if>
+            <if test="longitude != null">longitude,</if>
+            <if test="townStreet != null and townStreet != ''">town_street,</if>
+            <if test="totalFloors != null">total_floors,</if>
+            <if test="totalRooms != null">total_rooms,</if>
+            <if test="managerId != null">manager_id,</if>
+            <if test="managerType != null and managerType != ''">manager_type,</if>
+            <if test="houseType != null and houseType != ''">house_type,</if>
+            <if test="residenceType != null and residenceType != ''">residence_type,</if>
+            <if test="propertyType != null and propertyType != ''">property_type,</if>
+            <if test="isOnlineRental != null and isOnlineRental != ''">is_online_rental,</if>
+            <if test="hasAccessControl != null and hasAccessControl != ''">has_access_control,</if>
+            <if test="environmentType != null and environmentType != ''">environment_type,</if>
+            <if test="roomArea != null">room_area,</if>
+            <if test="rent != null">rent,</if>
+            <if test="roomsPerFloor != null">rooms_per_floor,</if>
+            <if test="frontPhoto != null and frontPhoto != ''">front_photo,</if>
+            <if test="sidePhoto != null and sidePhoto != ''">side_photo,</if>
+            <if test="surroundingPhoto != null and surroundingPhoto != ''">surrounding_photo,</if>
+            <if test="policeStationId != null">police_station_id,</if>
+            <if test="gridId != null">grid_id,</if>
+            <if test="overallLevel != null and overallLevel != ''">overall_level,</if>
+            <if test="status != null and status != ''">status,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            create_time,
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="address != null and address != ''">#{address},</if>
+            <if test="latitude != null">#{latitude},</if>
+            <if test="longitude != null">#{longitude},</if>
+            <if test="townStreet != null and townStreet != ''">#{townStreet},</if>
+            <if test="totalFloors != null">#{totalFloors},</if>
+            <if test="totalRooms != null">#{totalRooms},</if>
+            <if test="managerId != null">#{managerId},</if>
+            <if test="managerType != null and managerType != ''">#{managerType},</if>
+            <if test="houseType != null and houseType != ''">#{houseType},</if>
+            <if test="residenceType != null and residenceType != ''">#{residenceType},</if>
+            <if test="propertyType != null and propertyType != ''">#{propertyType},</if>
+            <if test="isOnlineRental != null and isOnlineRental != ''">#{isOnlineRental},</if>
+            <if test="hasAccessControl != null and hasAccessControl != ''">#{hasAccessControl},</if>
+            <if test="environmentType != null and environmentType != ''">#{environmentType},</if>
+            <if test="roomArea != null">#{roomArea},</if>
+            <if test="rent != null">#{rent},</if>
+            <if test="roomsPerFloor != null">#{roomsPerFloor},</if>
+            <if test="frontPhoto != null and frontPhoto != ''">#{frontPhoto},</if>
+            <if test="sidePhoto != null and sidePhoto != ''">#{sidePhoto},</if>
+            <if test="surroundingPhoto != null and surroundingPhoto != ''">#{surroundingPhoto},</if>
+            <if test="policeStationId != null">#{policeStationId},</if>
+            <if test="gridId != null">#{gridId},</if>
+            <if test="overallLevel != null and overallLevel != ''">#{overallLevel},</if>
+            <if test="status != null and status != ''">#{status},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            now(),
+        </trim>
+    </insert>
+
+    <update id="updateHouse" parameterType="RentalHouse">
+        update rental_houses
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="address != null and address != ''">address = #{address},</if>
+            <if test="latitude != null">latitude = #{latitude},</if>
+            <if test="longitude != null">longitude = #{longitude},</if>
+            <if test="townStreet != null and townStreet != ''">town_street = #{townStreet},</if>
+            <if test="totalFloors != null">total_floors = #{totalFloors},</if>
+            <if test="totalRooms != null">total_rooms = #{totalRooms},</if>
+            <if test="managerId != null">manager_id = #{managerId},</if>
+            <if test="managerType != null and managerType != ''">manager_type = #{managerType},</if>
+            <if test="houseType != null and houseType != ''">house_type = #{houseType},</if>
+            <if test="residenceType != null and residenceType != ''">residence_type = #{residenceType},</if>
+            <if test="propertyType != null and propertyType != ''">property_type = #{propertyType},</if>
+            <if test="isOnlineRental != null and isOnlineRental != ''">is_online_rental = #{isOnlineRental},</if>
+            <if test="hasAccessControl != null and hasAccessControl != ''">has_access_control = #{hasAccessControl},</if>
+            <if test="environmentType != null and environmentType != ''">environment_type = #{environmentType},</if>
+            <if test="roomArea != null">room_area = #{roomArea},</if>
+            <if test="rent != null">rent = #{rent},</if>
+            <if test="roomsPerFloor != null">rooms_per_floor = #{roomsPerFloor},</if>
+            <if test="frontPhoto != null">front_photo = #{frontPhoto},</if>
+            <if test="sidePhoto != null">side_photo = #{sidePhoto},</if>
+            <if test="surroundingPhoto != null">surrounding_photo = #{surroundingPhoto},</if>
+            <if test="policeStationId != null">police_station_id = #{policeStationId},</if>
+            <if test="gridId != null">grid_id = #{gridId},</if>
+            <if test="overallLevel != null and overallLevel != ''">overall_level = #{overallLevel},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = now(),
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteHouseById" parameterType="Long">
+        delete from rental_houses where id = #{id}
+    </delete>
+
+    <delete id="deleteHouseByIds" parameterType="Long">
+        delete from rental_houses where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="selectHouseMapList" parameterType="RentalHouse" resultType="com.ruoyi.rental.domain.vo.HouseMapVO">
+        select h.id, h.address, h.town_street as townStreet, h.total_floors as totalFloors, h.total_rooms as totalRooms,
+               h.latitude, h.longitude, h.overall_level as overallLevel, h.status,
+               m.manager_name as managerName, m.phone as managerPhone,
+               g.grid_name as gridName
+        from rental_houses h
+        left join rental_managers m on h.manager_id = m.id
+        left join rental_grids g on h.grid_id = g.id
+        where h.latitude is not null and h.longitude is not null
+        <if test="townStreet != null and townStreet != ''">
+            AND h.town_street = #{townStreet}
+        </if>
+        <if test="gridId != null">
+            AND h.grid_id = #{gridId}
+        </if>
+        <if test="overallLevel != null and overallLevel != ''">
+            AND h.overall_level = #{overallLevel}
+        </if>
+        <if test="status != null and status != ''">
+            AND h.status = #{status}
+        </if>
+        order by h.create_time desc
+    </select>
+
+    <select id="selectHouseNearby" resultMap="RentalHouseResult">
+        <include refid="selectHouseVo"/>
+        where h.status = '1'
+          and h.latitude is not null
+          and h.longitude is not null
+          and (
+            6371 * acos(
+              cos(radians(#{latitude})) * cos(radians(h.latitude))
+              * cos(radians(h.longitude) - radians(#{longitude}))
+              + sin(radians(#{latitude})) * sin(radians(h.latitude))
+            ) * 1000
+          ) &lt;= #{radius}
+        limit 100
+    </select>
+
+</mapper>

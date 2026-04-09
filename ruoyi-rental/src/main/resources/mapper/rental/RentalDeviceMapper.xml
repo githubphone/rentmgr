@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.rental.mapper.RentalDeviceMapper">
+
+    <resultMap type="RentalDevice" id="RentalDeviceResult">
+        <id     property="id"             column="id"              />
+        <result property="deviceCode"     column="device_code"      />
+        <result property="deviceName"     column="device_name"      />
+        <result property="deviceType"     column="device_type"      />
+        <result property="location"       column="location"        />
+        <result property="ipAddress"      column="ip_address"      />
+        <result property="status"         column="status"          />
+        <result property="lastHeartbeat"  column="last_heartbeat"  />
+        <result property="alarmSubscribed" column="alarm_subscribed" />
+        <result property="metadataSubscribed" column="metadata_subscribed" />
+        <result property="latitude"       column="latitude"        />
+        <result property="longitude"      column="longitude"       />
+        <result property="createBy"        column="create_by"       />
+        <result property="createTime"     column="create_time"     />
+    </resultMap>
+
+    <sql id="selectDeviceVo">
+        select id, device_code, device_name, device_type, location,
+               ip_address, status, last_heartbeat, alarm_subscribed, metadata_subscribed,
+               latitude, longitude,
+               create_by, create_time
+        from rental_devices
+    </sql>
+
+    <select id="selectDeviceList" parameterType="RentalDevice" resultMap="RentalDeviceResult">
+        <include refid="selectDeviceVo"/>
+        <where>
+            <if test="deviceCode != null and deviceCode != ''">and device_code = #{deviceCode}</if>
+            <if test="deviceName != null and deviceName != ''">and device_name like concat('%', #{deviceName}, '%')</if>
+            <if test="deviceType != null and deviceType != ''">and device_type = #{deviceType}</if>
+            <if test="status != null and status != ''">and status = #{status}</if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <select id="selectDeviceById" parameterType="Long" resultMap="RentalDeviceResult">
+        <include refid="selectDeviceVo"/>
+        where id = #{id}
+    </select>
+
+    <select id="selectDeviceByCode" parameterType="String" resultMap="RentalDeviceResult">
+        <include refid="selectDeviceVo"/>
+        where device_code = #{deviceCode}
+    </select>
+
+    <insert id="insertDevice" parameterType="RentalDevice" useGeneratedKeys="true" keyProperty="id">
+        insert into rental_devices
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="deviceCode != null and deviceCode != ''">device_code,</if>
+            <if test="deviceName != null and deviceName != ''">device_name,</if>
+            <if test="deviceType != null and deviceType != ''">device_type,</if>
+            <if test="location != null and location != ''">location,</if>
+            <if test="ipAddress != null and ipAddress != ''">ip_address,</if>
+            <if test="status != null and status != ''">status,</if>
+            <if test="lastHeartbeat != null">last_heartbeat,</if>
+            <if test="alarmSubscribed != null and alarmSubscribed != ''">alarm_subscribed,</if>
+            <if test="metadataSubscribed != null and metadataSubscribed != ''">metadata_subscribed,</if>
+            <if test="latitude != null">latitude,</if>
+            <if test="longitude != null">longitude,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            create_time,
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="deviceCode != null and deviceCode != ''">#{deviceCode},</if>
+            <if test="deviceName != null and deviceName != ''">#{deviceName},</if>
+            <if test="deviceType != null and deviceType != ''">#{deviceType},</if>
+            <if test="location != null and location != ''">#{location},</if>
+            <if test="ipAddress != null and ipAddress != ''">#{ipAddress},</if>
+            <if test="status != null and status != ''">#{status},</if>
+            <if test="lastHeartbeat != null">#{lastHeartbeat},</if>
+            <if test="alarmSubscribed != null and alarmSubscribed != ''">#{alarmSubscribed},</if>
+            <if test="metadataSubscribed != null and metadataSubscribed != ''">#{metadataSubscribed},</if>
+            <if test="latitude != null">#{latitude},</if>
+            <if test="longitude != null">#{longitude},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            now(),
+        </trim>
+    </insert>
+
+    <update id="updateDevice" parameterType="RentalDevice">
+        update rental_devices
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="deviceCode != null and deviceCode != ''">device_code = #{deviceCode},</if>
+            <if test="deviceName != null and deviceName != ''">device_name = #{deviceName},</if>
+            <if test="deviceType != null and deviceType != ''">device_type = #{deviceType},</if>
+            <if test="location != null and location != ''">location = #{location},</if>
+            <if test="ipAddress != null and ipAddress != ''">ip_address = #{ipAddress},</if>
+            <if test="status != null and status != ''">status = #{status},</if>
+            <if test="lastHeartbeat != null">last_heartbeat = #{lastHeartbeat},</if>
+            <if test="alarmSubscribed != null and alarmSubscribed != ''">alarm_subscribed = #{alarmSubscribed},</if>
+            <if test="metadataSubscribed != null and metadataSubscribed != ''">metadata_subscribed = #{metadataSubscribed},</if>
+            <if test="latitude != null">latitude = #{latitude},</if>
+            <if test="longitude != null">longitude = #{longitude},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteDeviceById" parameterType="Long">
+        delete from rental_devices where id = #{id}
+    </delete>
+
+    <delete id="deleteDeviceByIds" parameterType="Long">
+        delete from rental_devices where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="selectDeviceMapList" resultType="com.ruoyi.rental.domain.vo.DeviceMapVO">
+        select d.id, d.device_code as deviceCode, d.device_name as deviceName,
+               d.device_type as deviceType, d.location,
+               d.status, h.latitude, h.longitude
+        from rental_devices d
+        left join rental_house_devices hd on d.id = hd.device_id
+        left join rental_houses h on hd.house_id = h.id
+        where d.status = '0'
+          and h.latitude is not null
+          and h.longitude is not null
+    </select>
+
+    <select id="selectHouseIdByDeviceCode" parameterType="String" resultType="Long">
+        select hd.house_id
+        from rental_devices d
+        left join rental_house_devices hd on d.id = hd.device_id
+        where d.device_code = #{deviceCode}
+        limit 1
+    </select>
+
+</mapper>

@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.rental.mapper.RentalMapMapper">
+
+    <resultMap type="HouseMapVO" id="HouseMapVOResult">
+        <id property="id" column="id"/>
+        <result property="address" column="address"/>
+        <result property="townStreet" column="town_street"/>
+        <result property="building" column="building"/>
+        <result property="unit" column="unit"/>
+        <result property="roomNo" column="room_no"/>
+        <result property="latitude" column="latitude"/>
+        <result property="longitude" column="longitude"/>
+        <result property="managerName" column="manager_name"/>
+        <result property="managerPhone" column="manager_phone"/>
+        <result property="gridName" column="grid_name"/>
+        <result property="overallLevel" column="overall_level"/>
+        <result property="status" column="status"/>
+        <result property="totalFloors" column="total_floors"/>
+        <result property="totalRooms" column="total_rooms"/>
+        <result property="occupiedRooms" column="occupied_rooms"/>
+        <result property="vacantRooms" column="vacant_rooms"/>
+        <result property="residentCount" column="resident_count"/>
+        <result property="leftCount" column="left_count"/>
+    </resultMap>
+
+    <resultMap type="DeviceMapVO" id="DeviceMapVOResult">
+        <id property="id" column="id"/>
+        <result property="deviceCode" column="device_code"/>
+        <result property="deviceName" column="device_name"/>
+        <result property="deviceType" column="device_type"/>
+        <result property="latitude" column="latitude"/>
+        <result property="longitude" column="longitude"/>
+        <result property="location" column="location"/>
+        <result property="status" column="status"/>
+    </resultMap>
+
+    <resultMap type="AlertMapVO" id="AlertMapVOResult">
+        <id property="id" column="id"/>
+        <result property="houseId" column="house_id"/>
+        <result property="houseAddress" column="house_address"/>
+        <result property="alertType" column="alert_type"/>
+        <result property="level" column="level"/>
+        <result property="status" column="status"/>
+        <result property="description" column="description"/>
+        <result property="photoUrl" column="photo_url"/>
+        <result property="latitude" column="latitude"/>
+        <result property="longitude" column="longitude"/>
+    </resultMap>
+
+    <select id="selectHouseMapList" resultMap="HouseMapVOResult">
+        SELECT h.id, h.address, h.town_street, h.building, h.unit, h.room_no,
+               h.latitude, h.longitude,
+               h.total_floors, h.total_rooms, h.overall_level, h.status,
+               m.manager_name, m.phone as manager_phone,
+               g.grid_name,
+               (SELECT COUNT(*) FROM rental_residents r WHERE r.house_id = h.id AND r.status = '0') as occupied_rooms,
+               (SELECT COUNT(*) FROM rental_residents r WHERE r.house_id = h.id AND r.status = '0') as resident_count,
+               0 as left_count,
+               h.total_rooms - (SELECT COUNT(*) FROM rental_residents r WHERE r.house_id = h.id AND r.status = '0') as vacant_rooms
+        FROM rental_houses h
+        LEFT JOIN rental_managers m ON h.manager_id = m.id
+        LEFT JOIN rental_grids g ON h.grid_id = g.id
+        WHERE h.latitude IS NOT NULL AND h.longitude IS NOT NULL
+        <if test="houseId != null">
+            AND h.id = #{houseId}
+        </if>
+        ORDER BY h.create_time DESC
+    </select>
+
+    <select id="selectDeviceMapList" resultMap="DeviceMapVOResult">
+        SELECT d.id, d.device_code, d.device_name, d.device_type,
+               d.latitude, d.longitude, d.location, d.status
+        FROM rental_devices d
+        WHERE d.latitude IS NOT NULL AND d.longitude IS NOT NULL
+        <if test="deviceId != null">
+            AND d.id = #{deviceId}
+        </if>
+        ORDER BY d.create_time DESC
+    </select>
+
+    <select id="selectAlertMapList" resultMap="AlertMapVOResult">
+        SELECT a.id, a.house_id, h.address as house_address,
+               a.alert_type, a.level, a.status, a.description, a.photo_url,
+               h.latitude, h.longitude
+        FROM rental_alerts a
+        LEFT JOIN rental_houses h ON a.house_id = h.id
+        WHERE h.latitude IS NOT NULL AND h.longitude IS NOT NULL
+        <if test="alertId != null">
+            AND a.id = #{alertId}
+        </if>
+        ORDER BY a.create_time DESC
+    </select>
+
+    <select id="selectAccessHeatmap" resultType="HeatmapVO">
+        SELECT h.latitude, h.longitude, COUNT(*) as intensity
+        FROM rental_access_logs l
+        LEFT JOIN rental_houses h ON l.house_id = h.id
+        WHERE l.create_time BETWEEN #{startDate} AND #{endDate}
+          AND h.latitude IS NOT NULL AND h.longitude IS NOT NULL
+        GROUP BY h.latitude, h.longitude
+    </select>
+
+    <select id="selectHouseMapByTownStreet" resultMap="HouseMapVOResult">
+        SELECT h.id, h.address, h.town_street, h.building, h.unit, h.room_no,
+               h.latitude, h.longitude,
+               h.total_floors, h.total_rooms, h.overall_level, h.status,
+               m.manager_name, m.phone as manager_phone,
+               g.grid_name,
+               (SELECT COUNT(*) FROM rental_residents r WHERE r.house_id = h.id AND r.status = '0') as occupied_rooms,
+               (SELECT COUNT(*) FROM rental_residents r WHERE r.house_id = h.id AND r.status = '0') as resident_count,
+               0 as left_count,
+               h.total_rooms - (SELECT COUNT(*) FROM rental_residents r WHERE r.house_id = h.id AND r.status = '0') as vacant_rooms
+        FROM rental_houses h
+        LEFT JOIN rental_managers m ON h.manager_id = m.id
+        LEFT JOIN rental_grids g ON h.grid_id = g.id
+        WHERE h.latitude IS NOT NULL AND h.longitude IS NOT NULL
+          AND h.town_street = #{townStreet}
+        ORDER BY h.create_time DESC
+    </select>
+
+    <select id="selectHouseMapByGridId" resultMap="HouseMapVOResult">
+        SELECT h.id, h.address, h.town_street, h.building, h.unit, h.room_no,
+               h.latitude, h.longitude,
+               h.total_floors, h.total_rooms, h.overall_level, h.status,
+               m.manager_name, m.phone as manager_phone,
+               g.grid_name,
+               (SELECT COUNT(*) FROM rental_residents r WHERE r.house_id = h.id AND r.status = '0') as occupied_rooms,
+               (SELECT COUNT(*) FROM rental_residents r WHERE r.house_id = h.id AND r.status = '0') as resident_count,
+               0 as left_count,
+               h.total_rooms - (SELECT COUNT(*) FROM rental_residents r WHERE r.house_id = h.id AND r.status = '0') as vacant_rooms
+        FROM rental_houses h
+        LEFT JOIN rental_managers m ON h.manager_id = m.id
+        LEFT JOIN rental_grids g ON h.grid_id = g.id
+        WHERE h.latitude IS NOT NULL AND h.longitude IS NOT NULL
+          AND h.grid_id = #{gridId}
+        ORDER BY h.create_time DESC
+    </select>
+
+    <select id="selectRecentAlertMap" resultMap="AlertMapVOResult">
+        SELECT a.id, a.house_id, h.address as house_address,
+               a.alert_type, a.level, a.status, a.description, a.photo_url,
+               h.latitude, h.longitude
+        FROM rental_alerts a
+        LEFT JOIN rental_houses h ON a.house_id = h.id
+        WHERE h.latitude IS NOT NULL AND h.longitude IS NOT NULL
+        ORDER BY a.create_time DESC
+        LIMIT #{limit}
+    </select>
+
+</mapper>

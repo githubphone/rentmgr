@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.rental.mapper.RentalStatisticsMapper">
+
+    <select id="selectTodayAccessCount" resultType="Long">
+        SELECT COUNT(*) FROM rental_access_logs
+        WHERE DATE(create_time) = CURRENT_DATE
+    </select>
+
+    <select id="selectTodayStrangerCount" resultType="Long">
+        SELECT COUNT(*) FROM rental_access_logs
+        WHERE DATE(create_time) = CURRENT_DATE
+        AND is_stranger = '1'
+    </select>
+
+    <select id="selectTodayAlertCount" resultType="Long">
+        SELECT COUNT(*) FROM rental_alerts
+        WHERE DATE(create_time) = CURRENT_DATE
+    </select>
+
+    <select id="selectDeviceOnlineRate" resultType="Integer">
+        SELECT CASE
+            WHEN COUNT(*) = 0 THEN 0
+            ELSE ROUND(SUM(CASE WHEN status = '0' THEN 1 ELSE 0 END) * 100.0 / COUNT(*), 0)
+        END
+        FROM rental_devices
+    </select>
+
+    <select id="selectHouseTotal" resultType="Long">
+        SELECT COUNT(*) FROM rental_houses WHERE status = '0'
+    </select>
+
+    <select id="selectResidentTotal" resultType="Long">
+        SELECT COUNT(*) FROM rental_residents WHERE status = '0'
+    </select>
+
+    <select id="selectDeviceTotal" resultType="Long">
+        SELECT COUNT(*) FROM rental_devices
+    </select>
+
+    <select id="selectDeviceOnline" resultType="Long">
+        SELECT COUNT(*) FROM rental_devices WHERE status = '0'
+    </select>
+
+    <select id="selectDeviceOffline" resultType="Long">
+        SELECT COUNT(*) FROM rental_devices WHERE status != '0' OR status IS NULL
+    </select>
+
+    <select id="selectMonthAlertTotal" resultType="Long">
+        SELECT COUNT(*) FROM rental_alerts
+        WHERE TO_CHAR(create_time, 'YYYY-MM') = TO_CHAR(CURRENT_DATE, 'YYYY-MM')
+    </select>
+
+    <select id="selectMonthAlertResolved" resultType="Long">
+        SELECT COUNT(*) FROM rental_alerts
+        WHERE TO_CHAR(create_time, 'YYYY-MM') = TO_CHAR(CURRENT_DATE, 'YYYY-MM')
+        AND status = '2'
+    </select>
+
+    <select id="selectStrangerTop" resultType="Map">
+        SELECT h.district, h.address as houseAddress, COUNT(*) as count
+        FROM rental_access_logs l
+        LEFT JOIN rental_houses h ON l.house_id = h.id
+        WHERE l.is_stranger = '1'
+        AND l.create_time >= CURRENT_DATE - INTERVAL '7 days'
+        GROUP BY h.district, h.address
+        ORDER BY count DESC
+        LIMIT 10
+    </select>
+
+    <select id="selectAlertStats" resultType="Map">
+        SELECT status,
+               COUNT(*) as count,
+               CASE
+                   WHEN COUNT(*) = 0 THEN '0%'
+                   ELSE CONCAT(ROUND(COUNT(*) * 100.0 / (SELECT COUNT(*) FROM rental_alerts WHERE TO_CHAR(create_time, 'YYYY-MM') = TO_CHAR(CURRENT_DATE, 'YYYY-MM')), 0), '%')
+               END as rate,
+               EXTRACT(EPOCH FROM AVG(handle_time - create_time)) / 3600 as avgTime
+        FROM rental_alerts
+        WHERE TO_CHAR(create_time, 'YYYY-MM') = TO_CHAR(CURRENT_DATE, 'YYYY-MM')
+        GROUP BY status
+    </select>
+
+    <select id="selectHouseStatsByTownStreet" resultType="Map">
+        SELECT town_street as townStreet, COUNT(*) as count
+        FROM rental_houses
+        WHERE status = '1'
+        GROUP BY town_street
+        ORDER BY count DESC
+    </select>
+
+    <select id="selectHouseStatsByLevel" resultType="Map">
+        SELECT overall_level as overallLevel, COUNT(*) as count
+        FROM rental_houses
+        WHERE status = '1'
+        GROUP BY overall_level
+        ORDER BY count DESC
+    </select>
+
+    <select id="selectAccessStatsByMonth" resultType="Map">
+        SELECT TO_CHAR(create_time, 'YYYY-MM') as month, COUNT(*) as count
+        FROM rental_access_logs
+        WHERE create_time >= CURRENT_DATE - INTERVAL '1 year'
+        GROUP BY TO_CHAR(create_time, 'YYYY-MM')
+        ORDER BY month DESC
+        LIMIT #{months}
+    </select>
+
+    <select id="selectAlertStatsByMonth" resultType="Map">
+        SELECT TO_CHAR(create_time, 'YYYY-MM') as month, COUNT(*) as count
+        FROM rental_alerts
+        WHERE create_time >= CURRENT_DATE - INTERVAL '1 year'
+        GROUP BY TO_CHAR(create_time, 'YYYY-MM')
+        ORDER BY month DESC
+        LIMIT #{months}
+    </select>
+
+    <select id="selectAlertLevelStats" resultType="Map">
+        SELECT
+            COALESCE(SUM(CASE WHEN alert_level = '1' THEN 1 ELSE 0 END), 0) as serious,
+            COALESCE(SUM(CASE WHEN alert_level = '2' THEN 1 ELSE 0 END), 0) as moderate,
+            COALESCE(SUM(CASE WHEN alert_level = '3' THEN 1 ELSE 0 END), 0) as mild
+        FROM rental_alerts
+        WHERE TO_CHAR(create_time, 'YYYY-MM') = TO_CHAR(CURRENT_DATE, 'YYYY-MM')
+    </select>
+
+</mapper>

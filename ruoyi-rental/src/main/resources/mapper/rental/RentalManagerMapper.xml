@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.rental.mapper.RentalManagerMapper">
+
+    <resultMap type="RentalManager" id="RentalManagerResult">
+        <id     property="id"               column="id"                  />
+        <result property="userId"           column="user_id"            />
+        <result property="managerName"      column="manager_name"       />
+        <result property="phone"            column="phone"              />
+        <result property="idCard"           column="id_card"            />
+        <result property="idCardAddress"    column="id_card_address"   />
+        <result property="identity"         column="identity"          />
+        <result property="wechat"           column="wechat"             />
+        <result property="createBy"         column="create_by"         />
+        <result property="createTime"       column="create_time"       />
+        <result property="updateBy"         column="update_by"         />
+        <result property="updateTime"       column="update_time"       />
+    </resultMap>
+
+    <resultMap type="RentalManagerHouse" id="RentalManagerHouseResult">
+        <id     property="id"               column="id"                  />
+        <result property="managerId"        column="manager_id"         />
+        <result property="houseId"          column="house_id"          />
+        <result property="relationType"     column="relation_type"      />
+        <result property="createBy"         column="create_by"         />
+        <result property="createTime"       column="create_time"       />
+        <result property="updateBy"         column="update_by"         />
+        <result property="updateTime"       column="update_time"       />
+    </resultMap>
+
+    <sql id="selectManagerVo">
+        select id, user_id, manager_name, phone, id_card, id_card_address, identity,
+               wechat, create_by, create_time, update_by, update_time
+        from rental_managers
+    </sql>
+
+    <select id="selectManagerList" parameterType="RentalManager" resultMap="RentalManagerResult">
+        <include refid="selectManagerVo"/>
+        <where>
+            <if test="managerName != null and managerName != ''">
+                AND manager_name like concat('%', #{managerName}, '%')
+            </if>
+            <if test="phone != null and phone != ''">
+                AND phone = #{phone}
+            </if>
+            <if test="idCard != null and idCard != ''">
+                AND id_card = #{idCard}
+            </if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <select id="selectManagerById" parameterType="Long" resultMap="RentalManagerResult">
+        <include refid="selectManagerVo"/>
+        where id = #{id}
+    </select>
+
+    <select id="selectManagerByUserId" parameterType="Long" resultMap="RentalManagerResult">
+        <include refid="selectManagerVo"/>
+        where user_id = #{userId}
+    </select>
+
+    <insert id="insertManager" parameterType="RentalManager" useGeneratedKeys="true" keyProperty="id">
+        insert into rental_managers
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="userId != null">user_id,</if>
+            <if test="managerName != null and managerName != ''">manager_name,</if>
+            <if test="phone != null and phone != ''">phone,</if>
+            <if test="idCard != null and idCard != ''">id_card,</if>
+            <if test="idCardAddress != null and idCardAddress != ''">id_card_address,</if>
+            <if test="identity != null and identity != ''">identity,</if>
+            <if test="wechat != null and wechat != ''">wechat,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            create_time,
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="userId != null">#{userId},</if>
+            <if test="managerName != null and managerName != ''">#{managerName},</if>
+            <if test="phone != null and phone != ''">#{phone},</if>
+            <if test="idCard != null and idCard != ''">#{idCard},</if>
+            <if test="idCardAddress != null and idCardAddress != ''">#{idCardAddress},</if>
+            <if test="identity != null and identity != ''">#{identity},</if>
+            <if test="wechat != null and wechat != ''">#{wechat},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            now(),
+        </trim>
+    </insert>
+
+    <update id="updateManager" parameterType="RentalManager">
+        update rental_managers
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="managerName != null and managerName != ''">manager_name = #{managerName},</if>
+            <if test="phone != null and phone != ''">phone = #{phone},</if>
+            <if test="idCard != null and idCard != ''">id_card = #{idCard},</if>
+            <if test="idCardAddress != null and idCardAddress != ''">id_card_address = #{idCardAddress},</if>
+            <if test="identity != null and identity != ''">identity = #{identity},</if>
+            <if test="wechat != null and wechat != ''">wechat = #{wechat},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            update_time = now(),
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteManagerById" parameterType="Long">
+        delete from rental_managers where id = #{id}
+    </delete>
+
+    <delete id="deleteManagerByIds" parameterType="Long">
+        delete from rental_managers where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <select id="selectManagerHouseList" parameterType="RentalManagerHouse" resultMap="RentalManagerHouseResult">
+        select id, manager_id, house_id, relation_type, create_by, create_time, update_by, update_time
+        from rental_manager_house
+        <where>
+            <if test="managerId != null">
+                AND manager_id = #{managerId}
+            </if>
+            <if test="houseId != null">
+                AND house_id = #{houseId}
+            </if>
+            <if test="relationType != null and relationType != ''">
+                AND relation_type = #{relationType}
+            </if>
+        </where>
+        order by create_time desc
+    </select>
+
+    <insert id="insertManagerHouse" parameterType="RentalManagerHouse" useGeneratedKeys="true" keyProperty="id">
+        insert into rental_manager_house (manager_id, house_id, relation_type, create_by, create_time)
+        values (#{managerId}, #{houseId}, #{relationType}, #{createBy}, now())
+    </insert>
+
+    <delete id="deleteManagerHouseById" parameterType="Long">
+        delete from rental_manager_house where id = #{id}
+    </delete>
+
+    <select id="selectHouseIdsByManagerId" parameterType="Long" resultType="Long">
+        select house_id from rental_manager_house where manager_id = #{managerId}
+    </select>
+
+</mapper>

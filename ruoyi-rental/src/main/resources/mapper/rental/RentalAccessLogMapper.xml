@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ruoyi.rental.mapper.RentalAccessLogMapper">
+
+    <resultMap type="RentalAccessLog" id="RentalAccessLogResult">
+        <id     property="id"           column="id"             />
+        <result property="houseId"       column="house_id"      />
+        <result property="deviceId"     column="device_id"     />
+        <result property="captureTime"  column="capture_time"  />
+        <result property="photoUrl"      column="photo_url"      />
+        <result property="faceId"        column="face_id"       />
+        <result property="confidence"   column="confidence"     />
+        <result property="isStranger"   column="is_stranger"   />
+        <result property="isVerified"   column="is_verified"    />
+        <result property="createBy"      column="create_by"     />
+        <result property="createTime"    column="create_time"   />
+    </resultMap>
+
+    <sql id="selectAccessLogVo">
+        select id, house_id, device_id, capture_time, photo_url, face_id,
+               confidence, is_stranger, is_verified, create_by, create_time
+        from rental_access_logs
+    </sql>
+
+    <select id="selectAccessLogList" parameterType="RentalAccessLog" resultMap="RentalAccessLogResult">
+        <include refid="selectAccessLogVo"/>
+        <where>
+            <if test="houseId != null">and house_id = #{houseId}</if>
+            <if test="deviceId != null and deviceId != ''">and device_id = #{deviceId}</if>
+            <if test="faceId != null and faceId != ''">and face_id = #{faceId}</if>
+            <if test="isStranger != null and isStranger != ''">and is_stranger = #{isStranger}</if>
+            <if test="isVerified != null and isVerified != ''">and is_verified = #{isVerified}</if>
+            <if test="params.beginTime != null and params.beginTime != ''">
+                AND capture_time &gt;= #{params.beginTime}
+            </if>
+            <if test="params.endTime != null and params.endTime != ''">
+                AND capture_time &lt;= #{params.endTime}
+            </if>
+        </where>
+        order by capture_time desc
+    </select>
+
+    <select id="selectAccessLogById" parameterType="Long" resultMap="RentalAccessLogResult">
+        <include refid="selectAccessLogVo"/>
+        where id = #{id}
+    </select>
+
+    <insert id="insertAccessLog" parameterType="RentalAccessLog" useGeneratedKeys="true" keyProperty="id">
+        insert into rental_access_logs
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="houseId != null">house_id,</if>
+            <if test="deviceId != null and deviceId != ''">device_id,</if>
+            <if test="captureTime != null">capture_time,</if>
+            <if test="photoUrl != null and photoUrl != ''">photo_url,</if>
+            <if test="faceId != null and faceId != ''">face_id,</if>
+            <if test="confidence != null">confidence,</if>
+            <if test="isStranger != null and isStranger != ''">is_stranger,</if>
+            <if test="isVerified != null and isVerified != ''">is_verified,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            create_time,
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="houseId != null">#{houseId},</if>
+            <if test="deviceId != null and deviceId != ''">#{deviceId},</if>
+            <if test="captureTime != null">#{captureTime},</if>
+            <if test="photoUrl != null and photoUrl != ''">#{photoUrl},</if>
+            <if test="faceId != null and faceId != ''">#{faceId},</if>
+            <if test="confidence != null">#{confidence},</if>
+            <if test="isStranger != null and isStranger != ''">#{isStranger},</if>
+            <if test="isVerified != null and isVerified != ''">#{isVerified},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            now(),
+        </trim>
+    </insert>
+
+    <update id="updateAccessLog" parameterType="RentalAccessLog">
+        update rental_access_logs
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="houseId != null">house_id = #{houseId},</if>
+            <if test="deviceId != null and deviceId != ''">device_id = #{deviceId},</if>
+            <if test="captureTime != null">capture_time = #{captureTime},</if>
+            <if test="photoUrl != null and photoUrl != ''">photo_url = #{photoUrl},</if>
+            <if test="faceId != null and faceId != ''">face_id = #{faceId},</if>
+            <if test="confidence != null">confidence = #{confidence},</if>
+            <if test="isStranger != null and isStranger != ''">is_stranger = #{isStranger},</if>
+            <if test="isVerified != null and isVerified != ''">is_verified = #{isVerified},</if>
+            <if test="updateBy != null and updateBy != ''">update_by = #{updateBy},</if>
+            <if test="updateTime != null">update_time = #{updateTime},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <delete id="deleteAccessLogById" parameterType="Long">
+        delete from rental_access_logs where id = #{id}
+    </delete>
+
+    <delete id="deleteAccessLogByIds" parameterType="Long">
+        delete from rental_access_logs where id in
+        <foreach item="id" collection="array" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </delete>
+
+    <insert id="insertAccessLogAndGetId" parameterType="RentalAccessLog" useGeneratedKeys="true" keyProperty="id">
+        insert into rental_access_logs
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="houseId != null">house_id,</if>
+            <if test="deviceId != null and deviceId != ''">device_id,</if>
+            <if test="captureTime != null">capture_time,</if>
+            <if test="photoUrl != null and photoUrl != ''">photo_url,</if>
+            <if test="faceId != null and faceId != ''">face_id,</if>
+            <if test="confidence != null">confidence,</if>
+            <if test="isStranger != null and isStranger != ''">is_stranger,</if>
+            <if test="isVerified != null and isVerified != ''">is_verified,</if>
+            <if test="createBy != null and createBy != ''">create_by,</if>
+            create_time,
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="houseId != null">#{houseId},</if>
+            <if test="deviceId != null and deviceId != ''">#{deviceId},</if>
+            <if test="captureTime != null">#{captureTime},</if>
+            <if test="photoUrl != null and photoUrl != ''">#{photoUrl},</if>
+            <if test="faceId != null and faceId != ''">#{faceId},</if>
+            <if test="confidence != null">#{confidence},</if>
+            <if test="isStranger != null and isStranger != ''">#{isStranger},</if>
+            <if test="isVerified != null and isVerified != ''">#{isVerified},</if>
+            <if test="createBy != null and createBy != ''">#{createBy},</if>
+            now(),
+        </trim>
+    </insert>
+
+    <select id="selectHourlyAccessCount" parameterType="Date" resultType="java.util.Map">
+        select hour(capture_time) as hour, count(*) as count
+        from rental_access_logs
+        where date(capture_time) = date(#{date})
+        group by hour(capture_time)
+        order by hour
+    </select>
+
+    <select id="selectHourlyAccessCountByRange" resultType="java.util.Map">
+        select hour(capture_time) as hour, count(*) as count
+        from rental_access_logs
+        <![CDATA[
+        where capture_time >= #{beginOfDay} and capture_time < #{nextDay}
+        ]]>
+        group by hour(capture_time)
+        order by hour
+    </select>
+
+    <select id="selectResidentByFaceId" resultType="com.ruoyi.rental.domain.RentalResident">
+        select id, house_id, face_id from rental_residents
+        where face_id = #{faceId} and status = '0' limit 1
+    </select>
+
+    <select id="selectFacePhotoByFeatureId" resultType="com.ruoyi.rental.domain.RentalFacePhoto">
+        select id, resident_id, feature_id from rental_face_photos
+        where feature_id = #{featureId} limit 1
+    </select>
+
+</mapper>
